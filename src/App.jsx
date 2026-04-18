@@ -235,6 +235,32 @@ const pairTradeData = {
       { year: "2024", exportAtoB: 33, exportBtoA: 22.2, turnover: 55.2 },
     ],
   },
+  "China|United States": {
+    turnover: 575,
+    summary:
+      "The US-China corridor is one of the world's largest trade relationships, dominated by electronics, machinery, consumer goods, and agriculture.",
+    categories: [
+      { name: "Electronics", percent: 28 },
+      { name: "Consumer goods", percent: 20 },
+      { name: "Machinery", percent: 19 },
+      { name: "Agriculture", percent: 15 },
+      { name: "Industrial supply chain", percent: 18 },
+    ],
+    goods: [
+      "Semiconductors and electronics",
+      "Consumer retail goods",
+      "Industrial machinery",
+      "Soybeans and agriculture",
+      "Supply chain components",
+    ],
+    trend: [
+      { year: "2020", exportAtoB: 220, exportBtoA: 140, turnover: 360 },
+      { year: "2021", exportAtoB: 250, exportBtoA: 155, turnover: 405 },
+      { year: "2022", exportAtoB: 300, exportBtoA: 185, turnover: 485 },
+      { year: "2023", exportAtoB: 335, exportBtoA: 205, turnover: 540 },
+      { year: "2024", exportAtoB: 355, exportBtoA: 220, turnover: 575 },
+    ],
+  },
 };
 
 function formatTrillions(value) {
@@ -260,6 +286,26 @@ function getBalance(country) {
   return +(country.export - country.import).toFixed(2);
 }
 
+function getPairKey(a, b) {
+  if (!a || !b) return null;
+  return [a.name, b.name].sort().join("|");
+}
+
+function loadTopPairs() {
+  try {
+    return JSON.parse(localStorage.getItem("top_country_pairs") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveTopPair(pairKey) {
+  const current = loadTopPairs();
+  current[pairKey] = (current[pairKey] || 0) + 1;
+  localStorage.setItem("top_country_pairs", JSON.stringify(current));
+  return current;
+}
+
 function SearchableSelect({
   label,
   value,
@@ -268,6 +314,7 @@ function SearchableSelect({
   onSearchChange,
   options,
   selectedCountry,
+  theme,
 }) {
   const filtered = options.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
@@ -275,14 +322,14 @@ function SearchableSelect({
 
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      <div style={{ color: "#8fa5c5", fontSize: 13 }}>{label}</div>
+      <div style={{ color: theme.muted, fontSize: 13 }}>{label}</div>
       <div
         style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
-          background: "#0f1828",
-          border: "1px solid #233652",
+          background: theme.card,
+          border: `1px solid ${theme.border}`,
           borderRadius: 12,
           padding: "10px 12px",
         }}
@@ -296,7 +343,7 @@ function SearchableSelect({
           placeholder="Search country..."
           style={{
             background: "transparent",
-            color: "white",
+            color: theme.text,
             border: "none",
             fontSize: 14,
             outline: "none",
@@ -309,9 +356,9 @@ function SearchableSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
-          background: "#0f1828",
-          color: "white",
-          border: "1px solid #233652",
+          background: theme.card,
+          color: theme.text,
+          border: `1px solid ${theme.border}`,
           borderRadius: 12,
           padding: 12,
           fontSize: 15,
@@ -329,14 +376,14 @@ function SearchableSelect({
   );
 }
 
-function CountryCard({ title, country, color }) {
+function CountryCard({ title, country, color, theme }) {
   const balance = getBalance(country);
 
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -344,7 +391,7 @@ function CountryCard({ title, country, color }) {
       <div style={{ color, fontWeight: 700, marginBottom: 10 }}>{title}</div>
 
       {!country ? (
-        <div style={{ color: "#8fa5c5" }}>Страна не выбрана</div>
+        <div style={{ color: theme.muted }}>Страна не выбрана</div>
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -369,7 +416,7 @@ function CountryCard({ title, country, color }) {
   );
 }
 
-function StatsPanel({ country1, country2, relation }) {
+function StatsPanel({ country1, country2, relation, theme }) {
   const growth = growthPercent(relation?.trend);
   const balance1 = getBalance(country1);
   const balance2 = getBalance(country2);
@@ -377,8 +424,8 @@ function StatsPanel({ country1, country2, relation }) {
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -388,7 +435,7 @@ function StatsPanel({ country1, country2, relation }) {
       </div>
 
       {!country1 || !country2 ? (
-        <div style={{ color: "#8fa5c5" }}>
+        <div style={{ color: theme.muted }}>
           Выбери две страны, чтобы увидеть статистику сравнения.
         </div>
       ) : (
@@ -404,14 +451,14 @@ function StatsPanel({ country1, country2, relation }) {
   );
 }
 
-function SecurityPanel() {
+function SecurityPanel({ theme }) {
   const envReady = !!APP_NAME && !!DATA_MODE;
 
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -420,7 +467,7 @@ function SecurityPanel() {
         Security & system status
       </div>
 
-      <div style={{ display: "grid", gap: 10, color: "#d8e3f3" }}>
+      <div style={{ display: "grid", gap: 10, color: theme.text }}>
         <div><b>Data mode:</b> {DATA_MODE}</div>
         <div><b>Environment loaded:</b> {envReady ? "Yes" : "No"}</div>
         <div><b>Secrets in client code:</b> No</div>
@@ -432,12 +479,12 @@ function SecurityPanel() {
   );
 }
 
-function CategoriesPanel({ relation }) {
+function CategoriesPanel({ relation, theme }) {
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -447,19 +494,19 @@ function CategoriesPanel({ relation }) {
       </div>
 
       {!relation ? (
-        <div style={{ color: "#8fa5c5" }}>
+        <div style={{ color: theme.muted }}>
           Выбери две страны, чтобы увидеть товарооборот и категории.
         </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           <div>
-            <div style={{ color: "#8fa5c5", marginBottom: 4 }}>Estimated turnover</div>
+            <div style={{ color: theme.muted, marginBottom: 4 }}>Estimated turnover</div>
             <div style={{ fontSize: 24, fontWeight: 700 }}>
               {formatBillions(relation.turnover)}
             </div>
           </div>
 
-          <div style={{ color: "#c7d5ea", lineHeight: 1.6 }}>
+          <div style={{ color: theme.text, lineHeight: 1.6 }}>
             {relation.summary}
           </div>
 
@@ -480,10 +527,10 @@ function CategoriesPanel({ relation }) {
                 <div
                   style={{
                     height: 10,
-                    background: "#0a1220",
+                    background: theme.progressBg,
                     borderRadius: 999,
                     overflow: "hidden",
-                    border: "1px solid #1a2940",
+                    border: `1px solid ${theme.border}`,
                   }}
                 >
                   <div
@@ -503,12 +550,12 @@ function CategoriesPanel({ relation }) {
   );
 }
 
-function TopGoods({ relation }) {
+function TopGoods({ relation, theme }) {
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -518,7 +565,7 @@ function TopGoods({ relation }) {
       </div>
 
       {!relation ? (
-        <div style={{ color: "#8fa5c5" }}>
+        <div style={{ color: theme.muted }}>
           Выбери две страны, чтобы увидеть ключевые товары.
         </div>
       ) : (
@@ -527,11 +574,11 @@ function TopGoods({ relation }) {
             <div
               key={good}
               style={{
-                background: "#0a1220",
-                border: "1px solid #1a2940",
+                background: theme.box,
+                border: `1px solid ${theme.border}`,
                 borderRadius: 12,
                 padding: "10px 12px",
-                color: "#dce7f7",
+                color: theme.text,
               }}
             >
               {good}
@@ -543,12 +590,51 @@ function TopGoods({ relation }) {
   );
 }
 
-function TrendPanel({ relation, country1, country2 }) {
+function TrendPanel({ relation, country1, country2, theme }) {
+  if (!relation) {
+    return (
+      <div
+        style={{
+          background: theme.card,
+          border: `1px solid ${theme.border}`,
+          borderRadius: 18,
+          padding: 16,
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+          Yearly trade trends
+        </div>
+        <div style={{ color: theme.muted }}>
+          Выбери две страны, чтобы увидеть trend.
+        </div>
+      </div>
+    );
+  }
+
+  const width = 100;
+  const height = 140;
+  const padding = 12;
+  const maxValue = Math.max(...relation.trend.flatMap((p) => [p.exportAtoB, p.exportBtoA, p.turnover]));
+
+  function pointsFor(key) {
+    return relation.trend
+      .map((p, i) => {
+        const x =
+          padding + (i * (width - padding * 2)) / (relation.trend.length - 1);
+        const y =
+          height -
+          padding -
+          (p[key] / maxValue) * (height - padding * 2);
+        return `${x},${y}`;
+      })
+      .join(" ");
+  }
+
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -557,45 +643,99 @@ function TrendPanel({ relation, country1, country2 }) {
         Yearly trade trends
       </div>
 
-      {!relation ? (
-        <div style={{ color: "#8fa5c5" }}>
-          Выбери две страны, чтобы увидеть trend.
-        </div>
-      ) : (
-        <div style={{ display: "grid", gap: 10 }}>
-          <div style={{ color: "#c7d5ea", marginBottom: 4 }}>
-            Trend between {country1?.name} and {country2?.name}
-          </div>
+      <div style={{ color: theme.text, marginBottom: 10 }}>
+        Trend between {country1?.name} and {country2?.name}
+      </div>
 
-          {relation.trend.map((item) => (
-            <div
-              key={item.year}
-              style={{
-                background: "#0a1220",
-                border: "1px solid #1a2940",
-                borderRadius: 12,
-                padding: "10px 12px",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>{item.year}</div>
-              <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                Export A → B: {formatBillions(item.exportAtoB)}
-              </div>
-              <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                Export B → A: {formatBillions(item.exportBtoA)}
-              </div>
-              <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                Turnover: {formatBillions(item.turnover)}
-              </div>
-            </div>
-          ))}
+      <div
+        style={{
+          background: theme.box,
+          border: `1px solid ${theme.border}`,
+          borderRadius: 14,
+          padding: 12,
+        }}
+      >
+        <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: 220 }}>
+          {[0, 1, 2, 3].map((i) => {
+            const y = padding + (i * (height - padding * 2)) / 3;
+            return (
+              <line
+                key={i}
+                x1="0"
+                y1={y}
+                x2={width}
+                y2={y}
+                stroke={theme.grid}
+                strokeWidth="0.4"
+              />
+            );
+          })}
+
+          <polyline
+            fill="none"
+            stroke="#22c55e"
+            strokeWidth="1.5"
+            points={pointsFor("exportAtoB")}
+          />
+          <polyline
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="1.5"
+            points={pointsFor("exportBtoA")}
+          />
+          <polyline
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1.5"
+            points={pointsFor("turnover")}
+          />
+        </svg>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            flexWrap: "wrap",
+            marginTop: 8,
+            fontSize: 13,
+            color: theme.muted,
+          }}
+        >
+          <div style={{ color: "#22c55e" }}>● Export A → B</div>
+          <div style={{ color: "#f59e0b" }}>● Export B → A</div>
+          <div style={{ color: "#38bdf8" }}>● Turnover</div>
         </div>
-      )}
+      </div>
+
+      <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+        {relation.trend.map((item) => (
+          <div
+            key={item.year}
+            style={{
+              background: theme.box,
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              padding: "10px 12px",
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>{item.year}</div>
+            <div style={{ color: theme.text, fontSize: 14 }}>
+              Export A → B: {formatBillions(item.exportAtoB)}
+            </div>
+            <div style={{ color: theme.text, fontSize: 14 }}>
+              Export B → A: {formatBillions(item.exportBtoA)}
+            </div>
+            <div style={{ color: theme.text, fontSize: 14 }}>
+              Turnover: {formatBillions(item.turnover)}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function RelationshipsPanel({ country1, country2, relation }) {
+function RelationshipsPanel({ country1, country2, relation, theme }) {
   const text = useMemo(() => {
     if (!country1 || !country2) {
       return "Выбери две страны на карте или через списки сверху.";
@@ -612,8 +752,8 @@ function RelationshipsPanel({ country1, country2, relation }) {
   return (
     <div
       style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 18,
         padding: 16,
       }}
@@ -621,7 +761,54 @@ function RelationshipsPanel({ country1, country2, relation }) {
       <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10 }}>
         Relationships
       </div>
-      <div style={{ color: "#c7d5ea", lineHeight: 1.7 }}>{text}</div>
+      <div style={{ color: theme.text, lineHeight: 1.7 }}>{text}</div>
+    </div>
+  );
+}
+
+function TopPairsPanel({ topPairs, theme }) {
+  const entries = Object.entries(topPairs)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  return (
+    <div
+      style={{
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+        Most popular country pairs
+      </div>
+
+      {entries.length === 0 ? (
+        <div style={{ color: theme.muted }}>
+          Пока нет данных. Выбери пару стран, и она появится здесь.
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          {entries.map(([pair, count], index) => (
+            <div
+              key={pair}
+              style={{
+                background: theme.box,
+                border: `1px solid ${theme.border}`,
+                borderRadius: 12,
+                padding: "10px 12px",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <span>{index + 1}. {pair}</span>
+              <strong>{count}</strong>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -634,10 +821,40 @@ export default function App() {
   const [hoveredCode, setHoveredCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error] = useState("");
+  const [themeMode, setThemeMode] = useState(() => localStorage.getItem("theme_mode") || "dark");
+  const [topPairs, setTopPairs] = useState(() => loadTopPairs());
+
+  useEffect(() => {
+    localStorage.setItem("theme_mode", themeMode);
+  }, [themeMode]);
+
+  const theme = themeMode === "dark"
+    ? {
+        page: "linear-gradient(180deg, #07101d 0%, #0a1424 100%)",
+        mainCard: "#0c1627",
+        card: "#0f1828",
+        box: "#0a1220",
+        border: "#1d2b45",
+        borderStrong: "#1a2a40",
+        text: "#dbe7f7",
+        muted: "#8fa5c5",
+        grid: "#29405f",
+      }
+    : {
+        page: "linear-gradient(180deg, #eef5ff 0%, #f7fbff 100%)",
+        mainCard: "#ffffff",
+        card: "#ffffff",
+        box: "#f3f8ff",
+        border: "#d6e4f5",
+        borderStrong: "#dce7f6",
+        text: "#1c2b42",
+        muted: "#5d7799",
+        grid: "#c8d7ea",
+      };
 
   useEffect(() => {
     setLoading(true);
-    const t = setTimeout(() => setLoading(false), 350);
+    const t = setTimeout(() => setLoading(false), 250);
     return () => clearTimeout(t);
   }, [selectedCode1, selectedCode2]);
 
@@ -658,32 +875,30 @@ export default function App() {
 
   useEffect(() => {
     if (country1) {
-      track("country1_selected", {
-        country: country1.name,
-      });
+      track("country1_selected", { country: country1.name });
     }
   }, [country1]);
 
   useEffect(() => {
     if (country2) {
-      track("country2_selected", {
-        country: country2.name,
-      });
+      track("country2_selected", { country: country2.name });
     }
   }, [country2]);
 
   useEffect(() => {
     if (country1 && country2) {
+      const key = getPairKey(country1, country2);
       track("country_pair_selected", {
         pair: `${country1.name} - ${country2.name}`,
       });
+
+      const updated = saveTopPair(key);
+      setTopPairs(updated);
     }
   }, [country1, country2]);
 
   function handleMapClick(country) {
-    track("map_country_clicked", {
-      country: country.name,
-    });
+    track("map_country_clicked", { country: country.name });
 
     if (!selectedCode1) {
       setSelectedCode1(country.code);
@@ -731,9 +946,15 @@ export default function App() {
     setSearch2(country1 ? country1.name : "");
   }
 
+  function toggleTheme() {
+    const next = themeMode === "dark" ? "light" : "dark";
+    setThemeMode(next);
+    track("theme_toggled", { theme: next });
+  }
+
   const relation = useMemo(() => {
     if (!country1 || !country2) return null;
-    const key = [country1.name, country2.name].sort().join("|");
+    const key = getPairKey(country1, country2);
 
     return (
       pairTradeData[key] || {
@@ -769,8 +990,8 @@ export default function App() {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #07101d 0%, #0a1424 100%)",
-        color: "white",
+        background: theme.page,
+        color: theme.text,
         padding: 18,
         fontFamily: "Arial, sans-serif",
       }}
@@ -788,12 +1009,27 @@ export default function App() {
         >
           <div>
             <div style={{ fontSize: 46, fontWeight: 800 }}>🌍 {APP_NAME}</div>
-            <div style={{ color: "#8fa5c5", marginTop: 6 }}>
-              Country comparison, security status and statistics
+            <div style={{ color: theme.muted, marginTop: 6 }}>
+              Country comparison, analytics, security status and statistics
             </div>
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              onClick={toggleTheme}
+              style={{
+                border: "none",
+                background: themeMode === "dark" ? "#f59e0b" : "#111827",
+                color: "white",
+                padding: "12px 16px",
+                borderRadius: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {themeMode === "dark" ? "☀️ Light" : "🌙 Dark"}
+            </button>
+
             <button
               onClick={swapCountries}
               style={{
@@ -830,9 +1066,9 @@ export default function App() {
           <div
             style={{
               marginBottom: 12,
-              background: "#0f1828",
-              border: "1px solid #1d2b45",
-              color: "#9ac8ff",
+              background: theme.card,
+              border: `1px solid ${theme.border}`,
+              color: "#4ea3ff",
               borderRadius: 14,
               padding: 12,
             }}
@@ -865,11 +1101,11 @@ export default function App() {
         >
           <div
             style={{
-              background: "#0c1627",
-              border: "1px solid #1a2a40",
+              background: theme.mainCard,
+              border: `1px solid ${theme.borderStrong}`,
               borderRadius: 24,
               padding: 16,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
             }}
           >
             <div
@@ -888,6 +1124,7 @@ export default function App() {
                 onSearchChange={setSearch1}
                 options={countries}
                 selectedCountry={country1}
+                theme={theme}
               />
 
               <SearchableSelect
@@ -898,6 +1135,7 @@ export default function App() {
                 onSearchChange={setSearch2}
                 options={countries}
                 selectedCountry={country2}
+                theme={theme}
               />
             </div>
 
@@ -906,7 +1144,7 @@ export default function App() {
                 height: "72vh",
                 borderRadius: 18,
                 overflow: "hidden",
-                border: "1px solid #1d2b45",
+                border: `1px solid ${theme.border}`,
                 position: "relative",
               }}
             >
@@ -918,7 +1156,11 @@ export default function App() {
               >
                 <TileLayer
                   attribution="&copy; OpenStreetMap contributors & CARTO"
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  url={
+                    themeMode === "dark"
+                      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  }
                 />
 
                 {countries.map((c) => {
@@ -969,20 +1211,20 @@ export default function App() {
                     position: "absolute",
                     right: 14,
                     top: 14,
-                    background: "rgba(8,16,31,0.92)",
-                    border: "1px solid #1e3352",
+                    background: theme.card,
+                    border: `1px solid ${theme.border}`,
                     borderRadius: 14,
                     padding: 12,
                     minWidth: 220,
                     pointerEvents: "none",
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 22 }}>{hoveredCountry.flag}</span>
                     <strong>{hoveredCountry.name}</strong>
                   </div>
-                  <div style={{ color: "#c9d6ea", fontSize: 14, display: "grid", gap: 4 }}>
+                  <div style={{ color: theme.text, fontSize: 14, display: "grid", gap: 4 }}>
                     <div>Capital: {hoveredCountry.capital}</div>
                     <div>GDP: {formatTrillions(hoveredCountry.gdp)}</div>
                     <div>Export: {formatTrillions(hoveredCountry.export)}</div>
@@ -998,7 +1240,7 @@ export default function App() {
                 gap: 14,
                 flexWrap: "wrap",
                 marginTop: 12,
-                color: "#8fa5c5",
+                color: theme.muted,
                 fontSize: 13,
               }}
             >
@@ -1010,14 +1252,15 @@ export default function App() {
           </div>
 
           <div style={{ display: "grid", gap: 14, alignContent: "start" }}>
-            <CountryCard title="Country 1" country={country1} color="#22c55e" />
-            <CountryCard title="Country 2" country={country2} color="#f59e0b" />
-            <StatsPanel country1={country1} country2={country2} relation={relation} />
-            <SecurityPanel />
-            <CategoriesPanel relation={relation} />
-            <TopGoods relation={relation} />
-            <TrendPanel relation={relation} country1={country1} country2={country2} />
-            <RelationshipsPanel country1={country1} country2={country2} relation={relation} />
+            <CountryCard title="Country 1" country={country1} color="#22c55e" theme={theme} />
+            <CountryCard title="Country 2" country={country2} color="#f59e0b" theme={theme} />
+            <TopPairsPanel topPairs={topPairs} theme={theme} />
+            <StatsPanel country1={country1} country2={country2} relation={relation} theme={theme} />
+            <SecurityPanel theme={theme} />
+            <CategoriesPanel relation={relation} theme={theme} />
+            <TopGoods relation={relation} theme={theme} />
+            <TrendPanel relation={relation} country1={country1} country2={country2} theme={theme} />
+            <RelationshipsPanel country1={country1} country2={country2} relation={relation} theme={theme} />
           </div>
         </div>
       </div>
