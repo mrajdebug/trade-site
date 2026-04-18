@@ -6,6 +6,7 @@ import {
   Tooltip,
   Polyline,
 } from "react-leaflet";
+import { track } from "@vercel/analytics";
 
 const APP_NAME = import.meta.env.VITE_APP_NAME || "World Trade Map";
 const DATA_MODE = import.meta.env.VITE_DATA_MODE || "demo";
@@ -286,7 +287,9 @@ function SearchableSelect({
           padding: "10px 12px",
         }}
       >
-        <span style={{ fontSize: 20 }}>{selectedCountry ? selectedCountry.flag : "🌐"}</span>
+        <span style={{ fontSize: 20 }}>
+          {selectedCountry ? selectedCountry.flag : "🌐"}
+        </span>
         <input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -356,7 +359,10 @@ function CountryCard({ title, country, color }) {
           <div><b>GDP:</b> {formatTrillions(country.gdp)}</div>
           <div><b>Export:</b> {formatTrillions(country.export)}</div>
           <div><b>Import:</b> {formatTrillions(country.import)}</div>
-          <div><b>Trade balance:</b> {balance >= 0 ? "+" : ""}{formatTrillions(balance)}</div>
+          <div>
+            <b>Trade balance:</b> {balance >= 0 ? "+" : ""}
+            {formatTrillions(balance)}
+          </div>
         </div>
       )}
     </div>
@@ -391,10 +397,7 @@ function StatsPanel({ country1, country2, relation }) {
           <div><b>Country 1 balance:</b> {balance1 >= 0 ? "+" : ""}{formatTrillions(balance1)}</div>
           <div><b>Country 2 balance:</b> {balance2 >= 0 ? "+" : ""}{formatTrillions(balance2)}</div>
           <div><b>5-year turnover growth:</b> {growth ? `${growth}%` : "—"}</div>
-          <div>
-            <b>Top category:</b>{" "}
-            {relation?.categories?.length ? relation.categories[0].name : "—"}
-          </div>
+          <div><b>Top category:</b> {relation?.categories?.length ? relation.categories[0].name : "—"}</div>
         </div>
       )}
     </div>
@@ -653,7 +656,35 @@ export default function App() {
     [hoveredCode]
   );
 
+  useEffect(() => {
+    if (country1) {
+      track("country1_selected", {
+        country: country1.name,
+      });
+    }
+  }, [country1]);
+
+  useEffect(() => {
+    if (country2) {
+      track("country2_selected", {
+        country: country2.name,
+      });
+    }
+  }, [country2]);
+
+  useEffect(() => {
+    if (country1 && country2) {
+      track("country_pair_selected", {
+        pair: `${country1.name} - ${country2.name}`,
+      });
+    }
+  }, [country1, country2]);
+
   function handleMapClick(country) {
+    track("map_country_clicked", {
+      country: country.name,
+    });
+
     if (!selectedCode1) {
       setSelectedCode1(country.code);
       setSearch1(country.name);
@@ -685,6 +716,7 @@ export default function App() {
   }
 
   function resetSelection() {
+    track("reset_clicked");
     setSelectedCode1("");
     setSelectedCode2("");
     setSearch1("");
@@ -692,6 +724,7 @@ export default function App() {
   }
 
   function swapCountries() {
+    track("swap_clicked");
     setSelectedCode1(selectedCode2);
     setSelectedCode2(selectedCode1);
     setSearch1(country2 ? country2.name : "");
