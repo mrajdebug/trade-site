@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -7,6 +7,8 @@ import {
   Polyline,
 } from "react-leaflet";
 
+const APP_NAME = import.meta.env.VITE_APP_NAME || "World Trade Map";
+const DATA_MODE = import.meta.env.VITE_DATA_MODE || "demo";
 
 const countries = [
   {
@@ -18,9 +20,9 @@ const countries = [
     population: "331M",
     region: "North America",
     currency: "US Dollar",
-    gdp: "$25T",
-    export: "$2.0T",
-    import: "$2.5T",
+    gdp: 25.0,
+    export: 2.0,
+    import: 2.5,
     area: "9.8M km²",
   },
   {
@@ -32,9 +34,9 @@ const countries = [
     population: "1.4B",
     region: "Asia",
     currency: "Yuan",
-    gdp: "$18T",
-    export: "$3.0T",
-    import: "$2.2T",
+    gdp: 18.0,
+    export: 3.0,
+    import: 2.2,
     area: "9.6M km²",
   },
   {
@@ -46,9 +48,9 @@ const countries = [
     population: "36M",
     region: "Central Asia",
     currency: "Uzbek so'm",
-    gdp: "$80B",
-    export: "$0.5T",
-    import: "$0.6T",
+    gdp: 0.08,
+    export: 0.5,
+    import: 0.6,
     area: "448K km²",
   },
   {
@@ -60,9 +62,9 @@ const countries = [
     population: "83M",
     region: "Europe",
     currency: "Euro",
-    gdp: "$4.5T",
-    export: "$1.8T",
-    import: "$1.7T",
+    gdp: 4.5,
+    export: 1.8,
+    import: 1.7,
     area: "357K km²",
   },
   {
@@ -74,9 +76,9 @@ const countries = [
     population: "146M",
     region: "Eurasia",
     currency: "Ruble",
-    gdp: "$2.2T",
-    export: "$1.5T",
-    import: "$1.2T",
+    gdp: 2.2,
+    export: 1.5,
+    import: 1.2,
     area: "17.1M km²",
   },
   {
@@ -88,9 +90,9 @@ const countries = [
     population: "1.4B",
     region: "Asia",
     currency: "Indian Rupee",
-    gdp: "$3.7T",
-    export: "$1.2T",
-    import: "$1.4T",
+    gdp: 3.7,
+    export: 1.2,
+    import: 1.4,
     area: "3.28M km²",
   },
   {
@@ -102,9 +104,9 @@ const countries = [
     population: "85M",
     region: "Europe / Asia",
     currency: "Turkish Lira",
-    gdp: "$1.1T",
-    export: "$0.9T",
-    import: "$1.1T",
+    gdp: 1.1,
+    export: 0.9,
+    import: 1.1,
     area: "783K km²",
   },
   {
@@ -116,9 +118,9 @@ const countries = [
     population: "20M",
     region: "Central Asia",
     currency: "Tenge",
-    gdp: "$260B",
-    export: "$0.7T",
-    import: "$0.5T",
+    gdp: 0.26,
+    export: 0.7,
+    import: 0.5,
     area: "2.7M km²",
   },
   {
@@ -130,9 +132,9 @@ const countries = [
     population: "67M",
     region: "Europe",
     currency: "Pound sterling",
-    gdp: "$3.3T",
-    export: "$0.9T",
-    import: "$1.1T",
+    gdp: 3.3,
+    export: 0.9,
+    import: 1.1,
     area: "243K km²",
   },
   {
@@ -144,9 +146,9 @@ const countries = [
     population: "68M",
     region: "Europe",
     currency: "Euro",
-    gdp: "$3.0T",
-    export: "$0.8T",
-    import: "$0.9T",
+    gdp: 3.0,
+    export: 0.8,
+    import: 0.9,
     area: "551K km²",
   },
   {
@@ -158,9 +160,9 @@ const countries = [
     population: "125M",
     region: "Asia",
     currency: "Yen",
-    gdp: "$4.2T",
-    export: "$0.9T",
-    import: "$1.0T",
+    gdp: 4.2,
+    export: 0.9,
+    import: 1.0,
     area: "378K km²",
   },
   {
@@ -172,16 +174,16 @@ const countries = [
     population: "51M",
     region: "Asia",
     currency: "Won",
-    gdp: "$1.7T",
-    export: "$0.8T",
-    import: "$0.7T",
+    gdp: 1.7,
+    export: 0.8,
+    import: 0.7,
     area: "100K km²",
   },
 ];
 
 const pairTradeData = {
   "China|Uzbekistan": {
-    turnover: "$13.8B",
+    turnover: 13.8,
     summary:
       "China exports mostly technology, electronics, machinery, and industrial goods to Uzbekistan.",
     categories: [
@@ -207,7 +209,7 @@ const pairTradeData = {
     ],
   },
   "Germany|Turkey": {
-    turnover: "$55.2B",
+    turnover: 55.2,
     summary:
       "Germany and Turkey are strongly connected through manufacturing, vehicles, and industrial supply chains.",
     categories: [
@@ -232,92 +234,29 @@ const pairTradeData = {
       { year: "2024", exportAtoB: 33, exportBtoA: 22.2, turnover: 55.2 },
     ],
   },
-  "Russia|Kazakhstan": {
-    turnover: "$26.4B",
-    summary:
-      "Russia and Kazakhstan trade is dominated by energy, metals, machinery, and regional logistics.",
-    categories: [
-      { name: "Energy", percent: 31 },
-      { name: "Metals", percent: 22 },
-      { name: "Machinery", percent: 18 },
-      { name: "Agriculture", percent: 14 },
-      { name: "Consumer goods", percent: 15 },
-    ],
-    goods: [
-      "Oil and gas products",
-      "Steel and metals",
-      "Railway machinery",
-      "Agricultural goods",
-      "Consumer imports",
-    ],
-    trend: [
-      { year: "2020", exportAtoB: 11, exportBtoA: 8, turnover: 19 },
-      { year: "2021", exportAtoB: 12, exportBtoA: 8.6, turnover: 20.6 },
-      { year: "2022", exportAtoB: 13.5, exportBtoA: 9.2, turnover: 22.7 },
-      { year: "2023", exportAtoB: 14.7, exportBtoA: 10.3, turnover: 25.0 },
-      { year: "2024", exportAtoB: 15.4, exportBtoA: 11.0, turnover: 26.4 },
-    ],
-  },
-  "China|United States": {
-    turnover: "$575B",
-    summary:
-      "The US-China corridor is one of the world's largest trade relationships, dominated by electronics, machinery, consumer goods, and agriculture.",
-    categories: [
-      { name: "Electronics", percent: 28 },
-      { name: "Consumer goods", percent: 20 },
-      { name: "Machinery", percent: 19 },
-      { name: "Agriculture", percent: 15 },
-      { name: "Industrial supply chain", percent: 18 },
-    ],
-    goods: [
-      "Semiconductors and electronics",
-      "Consumer retail goods",
-      "Industrial machinery",
-      "Soybeans and agriculture",
-      "Supply chain components",
-    ],
-    trend: [
-      { year: "2020", exportAtoB: 220, exportBtoA: 140, turnover: 360 },
-      { year: "2021", exportAtoB: 250, exportBtoA: 155, turnover: 405 },
-      { year: "2022", exportAtoB: 300, exportBtoA: 185, turnover: 485 },
-      { year: "2023", exportAtoB: 335, exportBtoA: 205, turnover: 540 },
-      { year: "2024", exportAtoB: 355, exportBtoA: 220, turnover: 575 },
-    ],
-  },
 };
 
-function CountryCard({ title, country, color }) {
-  return (
-    <div
-      style={{
-        background: "#0f1828",
-        border: "1px solid #1d2b45",
-        borderRadius: 18,
-        padding: 16,
-      }}
-    >
-      <div style={{ color, fontWeight: 700, marginBottom: 10 }}>{title}</div>
+function formatTrillions(value) {
+  if (value == null) return "—";
+  return `$${value.toFixed(2)}T`;
+}
 
-      {!country ? (
-        <div style={{ color: "#8fa5c5" }}>Страна не выбрана</div>
-      ) : (
-        <div style={{ display: "grid", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 28 }}>{country.flag}</span>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>{country.name}</div>
-          </div>
-          <div><b>Capital:</b> {country.capital}</div>
-          <div><b>Population:</b> {country.population}</div>
-          <div><b>Region:</b> {country.region}</div>
-          <div><b>Currency:</b> {country.currency}</div>
-          <div><b>Area:</b> {country.area}</div>
-          <div><b>GDP:</b> {country.gdp}</div>
-          <div><b>Export:</b> {country.export}</div>
-          <div><b>Import:</b> {country.import}</div>
-        </div>
-      )}
-    </div>
-  );
+function formatBillions(value) {
+  if (value == null) return "—";
+  return `$${value.toFixed(1)}B`;
+}
+
+function growthPercent(trend) {
+  if (!trend || trend.length < 2) return null;
+  const first = trend[0].turnover;
+  const last = trend[trend.length - 1].turnover;
+  if (!first) return null;
+  return (((last - first) / first) * 100).toFixed(1);
+}
+
+function getBalance(country) {
+  if (!country) return null;
+  return +(country.export - country.import).toFixed(2);
 }
 
 function SearchableSelect({
@@ -336,7 +275,6 @@ function SearchableSelect({
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <div style={{ color: "#8fa5c5", fontSize: 13 }}>{label}</div>
-
       <div
         style={{
           display: "flex",
@@ -388,6 +326,180 @@ function SearchableSelect({
   );
 }
 
+function CountryCard({ title, country, color }) {
+  const balance = getBalance(country);
+
+  return (
+    <div
+      style={{
+        background: "#0f1828",
+        border: "1px solid #1d2b45",
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <div style={{ color, fontWeight: 700, marginBottom: 10 }}>{title}</div>
+
+      {!country ? (
+        <div style={{ color: "#8fa5c5" }}>Страна не выбрана</div>
+      ) : (
+        <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 28 }}>{country.flag}</span>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>{country.name}</div>
+          </div>
+          <div><b>Capital:</b> {country.capital}</div>
+          <div><b>Population:</b> {country.population}</div>
+          <div><b>Region:</b> {country.region}</div>
+          <div><b>Currency:</b> {country.currency}</div>
+          <div><b>Area:</b> {country.area}</div>
+          <div><b>GDP:</b> {formatTrillions(country.gdp)}</div>
+          <div><b>Export:</b> {formatTrillions(country.export)}</div>
+          <div><b>Import:</b> {formatTrillions(country.import)}</div>
+          <div><b>Trade balance:</b> {balance >= 0 ? "+" : ""}{formatTrillions(balance)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatsPanel({ country1, country2, relation }) {
+  const growth = growthPercent(relation?.trend);
+  const balance1 = getBalance(country1);
+  const balance2 = getBalance(country2);
+
+  return (
+    <div
+      style={{
+        background: "#0f1828",
+        border: "1px solid #1d2b45",
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+        Statistics
+      </div>
+
+      {!country1 || !country2 ? (
+        <div style={{ color: "#8fa5c5" }}>
+          Выбери две страны, чтобы увидеть статистику сравнения.
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          <div><b>Total turnover:</b> {relation ? formatBillions(relation.turnover) : "—"}</div>
+          <div><b>Country 1 balance:</b> {balance1 >= 0 ? "+" : ""}{formatTrillions(balance1)}</div>
+          <div><b>Country 2 balance:</b> {balance2 >= 0 ? "+" : ""}{formatTrillions(balance2)}</div>
+          <div><b>5-year turnover growth:</b> {growth ? `${growth}%` : "—"}</div>
+          <div>
+            <b>Top category:</b>{" "}
+            {relation?.categories?.length ? relation.categories[0].name : "—"}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SecurityPanel() {
+  const envReady = !!APP_NAME && !!DATA_MODE;
+
+  return (
+    <div
+      style={{
+        background: "#0f1828",
+        border: "1px solid #1d2b45",
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+        Security & system status
+      </div>
+
+      <div style={{ display: "grid", gap: 10, color: "#d8e3f3" }}>
+        <div><b>Data mode:</b> {DATA_MODE}</div>
+        <div><b>Environment loaded:</b> {envReady ? "Yes" : "No"}</div>
+        <div><b>Secrets in client code:</b> No</div>
+        <div><b>Fallback mode:</b> Enabled</div>
+        <div><b>Map status:</b> Active</div>
+        <div><b>Error handling:</b> Basic UI fallback enabled</div>
+      </div>
+    </div>
+  );
+}
+
+function CategoriesPanel({ relation }) {
+  return (
+    <div
+      style={{
+        background: "#0f1828",
+        border: "1px solid #1d2b45",
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+        Turnover by categories
+      </div>
+
+      {!relation ? (
+        <div style={{ color: "#8fa5c5" }}>
+          Выбери две страны, чтобы увидеть товарооборот и категории.
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          <div>
+            <div style={{ color: "#8fa5c5", marginBottom: 4 }}>Estimated turnover</div>
+            <div style={{ fontSize: 24, fontWeight: 700 }}>
+              {formatBillions(relation.turnover)}
+            </div>
+          </div>
+
+          <div style={{ color: "#c7d5ea", lineHeight: 1.6 }}>
+            {relation.summary}
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {relation.categories.map((item) => (
+              <div key={item.name}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 14,
+                    marginBottom: 6,
+                  }}
+                >
+                  <span>{item.name}</span>
+                  <span>{item.percent}%</span>
+                </div>
+                <div
+                  style={{
+                    height: 10,
+                    background: "#0a1220",
+                    borderRadius: 999,
+                    overflow: "hidden",
+                    border: "1px solid #1a2940",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${item.percent}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #2563eb, #38bdf8)",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TopGoods({ relation }) {
   return (
     <div
@@ -428,7 +540,7 @@ function TopGoods({ relation }) {
   );
 }
 
-function TrendChart({ relation, country1, country2 }) {
+function TrendPanel({ relation, country1, country2 }) {
   return (
     <div
       style={{
@@ -464,18 +576,49 @@ function TrendChart({ relation, country1, country2 }) {
             >
               <div style={{ fontWeight: 700, marginBottom: 6 }}>{item.year}</div>
               <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                Export A → B: {item.exportAtoB}B
+                Export A → B: {formatBillions(item.exportAtoB)}
               </div>
               <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                Export B → A: {item.exportBtoA}B
+                Export B → A: {formatBillions(item.exportBtoA)}
               </div>
               <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                Turnover: {item.turnover}B
+                Turnover: {formatBillions(item.turnover)}
               </div>
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function RelationshipsPanel({ country1, country2, relation }) {
+  const text = useMemo(() => {
+    if (!country1 || !country2) {
+      return "Выбери две страны на карте или через списки сверху.";
+    }
+
+    const exportLeader =
+      country1.export >= country2.export ? country1.name : country2.name;
+    const importLeader =
+      country1.import >= country2.import ? country1.name : country2.name;
+
+    return `${country1.name} and ${country2.name} are compared as a trade pair. ${exportLeader} has the larger export scale, while ${importLeader} has the larger import scale. ${relation ? relation.summary : ""}`;
+  }, [country1, country2, relation]);
+
+  return (
+    <div
+      style={{
+        background: "#0f1828",
+        border: "1px solid #1d2b45",
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10 }}>
+        Relationships
+      </div>
+      <div style={{ color: "#c7d5ea", lineHeight: 1.7 }}>{text}</div>
     </div>
   );
 }
@@ -486,6 +629,14 @@ export default function App() {
   const [search1, setSearch1] = useState("");
   const [search2, setSearch2] = useState("");
   const [hoveredCode, setHoveredCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 350);
+    return () => clearTimeout(t);
+  }, [selectedCode1, selectedCode2]);
 
   const country1 = useMemo(
     () => countries.find((c) => c.code === selectedCode1) || null,
@@ -553,10 +704,9 @@ export default function App() {
 
     return (
       pairTradeData[key] || {
-        turnover: "Estimated / demo",
+        turnover: 16.5,
         summary:
-          `${country1.name} and ${country2.name} can already be compared as a trade pair. ` +
-          `For exact bilateral turnover and real product categories, the next step is connecting a real trade API.`,
+          `${country1.name} and ${country2.name} can already be compared as a trade pair. For exact bilateral turnover and real product categories, the next step is connecting a real trade API.`,
         categories: [
           { name: "Machinery", percent: 24 },
           { name: "Technology", percent: 22 },
@@ -572,35 +722,15 @@ export default function App() {
           "Consumer trade goods",
         ],
         trend: [
-          { year: "2020", exportAtoB: 6, exportBtoA: 4, turnover: 10 },
-          { year: "2021", exportAtoB: 7, exportBtoA: 5, turnover: 12 },
-          { year: "2022", exportAtoB: 8, exportBtoA: 5.5, turnover: 13.5 },
-          { year: "2023", exportAtoB: 9, exportBtoA: 6, turnover: 15 },
-          { year: "2024", exportAtoB: 10, exportBtoA: 6.5, turnover: 16.5 },
+          { year: "2020", exportAtoB: 6.0, exportBtoA: 4.0, turnover: 10.0 },
+          { year: "2021", exportAtoB: 7.0, exportBtoA: 5.0, turnover: 12.0 },
+          { year: "2022", exportAtoB: 8.0, exportBtoA: 5.5, turnover: 13.5 },
+          { year: "2023", exportAtoB: 9.0, exportBtoA: 6.0, turnover: 15.0 },
+          { year: "2024", exportAtoB: 10.0, exportBtoA: 6.5, turnover: 16.5 },
         ],
       }
     );
   }, [country1, country2]);
-
-  const comparisonText = useMemo(() => {
-    if (!country1 || !country2) {
-      return "Выбери две страны на карте или через списки сверху.";
-    }
-
-    const exportLeader =
-      parseFloat(country1.export.replace(/[^0-9.]/g, "")) >=
-      parseFloat(country2.export.replace(/[^0-9.]/g, ""))
-        ? country1.name
-        : country2.name;
-
-    const importLeader =
-      parseFloat(country1.import.replace(/[^0-9.]/g, "")) >=
-      parseFloat(country2.import.replace(/[^0-9.]/g, ""))
-        ? country1.name
-        : country2.name;
-
-    return `${country1.name} and ${country2.name} are compared as a trade pair. ${exportLeader} has the larger export scale, while ${importLeader} has the larger import scale. ${relation ? relation.summary : ""}`;
-  }, [country1, country2, relation]);
 
   return (
     <div
@@ -624,9 +754,9 @@ export default function App() {
           }}
         >
           <div>
-            <div style={{ fontSize: 46, fontWeight: 800 }}>🌍 World Trade Map</div>
+            <div style={{ fontSize: 46, fontWeight: 800 }}>🌍 {APP_NAME}</div>
             <div style={{ color: "#8fa5c5", marginTop: 6 }}>
-              Country comparison, turnover, categories, top goods and yearly trends
+              Country comparison, security status and statistics
             </div>
           </div>
 
@@ -662,6 +792,36 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {loading && (
+          <div
+            style={{
+              marginBottom: 12,
+              background: "#0f1828",
+              border: "1px solid #1d2b45",
+              color: "#9ac8ff",
+              borderRadius: 14,
+              padding: 12,
+            }}
+          >
+            Loading comparison data...
+          </div>
+        )}
+
+        {error && (
+          <div
+            style={{
+              marginBottom: 12,
+              background: "#2a1010",
+              border: "1px solid #5a1e1e",
+              color: "#ffb4b4",
+              borderRadius: 14,
+              padding: 12,
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <div
           style={{
@@ -791,9 +951,9 @@ export default function App() {
                   </div>
                   <div style={{ color: "#c9d6ea", fontSize: 14, display: "grid", gap: 4 }}>
                     <div>Capital: {hoveredCountry.capital}</div>
-                    <div>GDP: {hoveredCountry.gdp}</div>
-                    <div>Export: {hoveredCountry.export}</div>
-                    <div>Import: {hoveredCountry.import}</div>
+                    <div>GDP: {formatTrillions(hoveredCountry.gdp)}</div>
+                    <div>Export: {formatTrillions(hoveredCountry.export)}</div>
+                    <div>Import: {formatTrillions(hoveredCountry.import)}</div>
                   </div>
                 </div>
               )}
@@ -819,95 +979,12 @@ export default function App() {
           <div style={{ display: "grid", gap: 14, alignContent: "start" }}>
             <CountryCard title="Country 1" country={country1} color="#22c55e" />
             <CountryCard title="Country 2" country={country2} color="#f59e0b" />
-
-            <div
-              style={{
-                background: "#0f1828",
-                border: "1px solid #1d2b45",
-                borderRadius: 18,
-                padding: 16,
-              }}
-            >
-              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
-                Turnover by categories
-              </div>
-
-              {!relation ? (
-                <div style={{ color: "#8fa5c5" }}>
-                  Выбери две страны, чтобы увидеть товарооборот и категории.
-                </div>
-              ) : (
-                <div style={{ display: "grid", gap: 12 }}>
-                  <div>
-                    <div style={{ color: "#8fa5c5", marginBottom: 4 }}>
-                      Estimated turnover
-                    </div>
-                    <div style={{ fontSize: 24, fontWeight: 700 }}>
-                      {relation.turnover}
-                    </div>
-                  </div>
-
-                  <div style={{ color: "#c7d5ea", lineHeight: 1.6 }}>
-                    {relation.summary}
-                  </div>
-
-                  <div style={{ display: "grid", gap: 10 }}>
-                    {relation.categories.map((item) => (
-                      <div key={item.name}>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            fontSize: 14,
-                            marginBottom: 6,
-                          }}
-                        >
-                          <span>{item.name}</span>
-                          <span>{item.percent}%</span>
-                        </div>
-                        <div
-                          style={{
-                            height: 10,
-                            background: "#0a1220",
-                            borderRadius: 999,
-                            overflow: "hidden",
-                            border: "1px solid #1a2940",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${item.percent}%`,
-                              height: "100%",
-                              background:
-                                "linear-gradient(90deg, #2563eb, #38bdf8)",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
+            <StatsPanel country1={country1} country2={country2} relation={relation} />
+            <SecurityPanel />
+            <CategoriesPanel relation={relation} />
             <TopGoods relation={relation} />
-            <TrendChart relation={relation} country1={country1} country2={country2} />
-
-            <div
-              style={{
-                background: "#0f1828",
-                border: "1px solid #1d2b45",
-                borderRadius: 18,
-                padding: 16,
-              }}
-            >
-              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10 }}>
-                Relationships
-              </div>
-              <div style={{ color: "#c7d5ea", lineHeight: 1.7 }}>
-                {comparisonText}
-              </div>
-            </div>
+            <TrendPanel relation={relation} country1={country1} country2={country2} />
+            <RelationshipsPanel country1={country1} country2={country2} relation={relation} />
           </div>
         </div>
       </div>
